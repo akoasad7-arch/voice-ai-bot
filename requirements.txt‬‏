@@ -1,4 +1,4 @@
-pytelegrambotapi
+pyTelegramBotAPI==4.26.0
 requests
 yt-dlp
 Flask
