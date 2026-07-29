@@ -1,2 +1,0 @@
-pyTelegramBotAPI
-edge-tts
