@@ -17,7 +17,7 @@ def home():
 
 def run_flask():
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
 
 # ================= الإعدادات الأساسية والمفاتيح =================
 MAIN_BOT_TOKEN = "8670100497:AAGoCnO6beXj9HIi2lNucddCPOLKxZHMiJc"
@@ -269,6 +269,7 @@ def main_messages(message):
             else:
                 main_bot.edit_message_text(f"❌ فشل التحميل: <code>{res}</code>", message.chat.id, wait_msg.message_id, parse_mode="HTML")
         threading.Thread(target=run).start()
+
 # ================= بوت المطور الخاص بك (Admin Bot) =================
 @admin_bot.message_handler(commands=['start'])
 def admin_start(message):
@@ -314,12 +315,10 @@ def admin_messages(message):
         return
     if message.text.startswith('/'): return
     
-    # تحكم الذكاء الاصطناعي الخاص بالمطور (سيدي الجبوري) والأوامر المباشرة
     prompt_text = message.text
     ai_response = ask_united_ai(f"المتحدث هو سيدي ومطوري الجبوري. أجب عليه بطاعة كاملة وبأسلوب لائق وخدماتي: {prompt_text}")
     
     db = load_db()
-    # إذا كانت رسالة عادية للمطور، نجيبه مباشرة، وإذا أراد إرسال إذاعة يمكنه استخدام الأوامر المخصصة
     if "إذاعة" in prompt_text or "ارسل" in prompt_text:
         users = db.get("users", {})
         success = 0
@@ -334,7 +333,7 @@ def admin_messages(message):
     else:
         admin_bot.reply_to(message, f"🤖 **أمرك يا سيدي الجبوري:**\n\n{ai_response}", parse_mode="Markdown")
 
-# ================= تشغيل السيرفر والبوتات معاً عبر Threads =================
+# ================= تشغيل البوتات في الخلفية وتشغيل السيرفر في الخيط الرئيسي =================
 def run_main_bot():
     while True:
         try:
@@ -350,16 +349,11 @@ def run_admin_bot():
             time.sleep(5)
 
 if __name__ == '__main__':
-    t_flask = threading.Thread(target=run_flask)
-    t_main = threading.Thread(target=run_main_bot)
-    t_admin = threading.Thread(target=run_admin_bot)
+    t_main = threading.Thread(target=run_main_bot, daemon=True)
+    t_admin = threading.Thread(target=run_admin_bot, daemon=True)
     
-    t_flask.start()
     t_main.start()
     t_admin.start()
     
-    print("🚀 تم تشغيل سيرفر الويب والبوتات بنجاح تحت إشراف المطور الجبوري...")
-    
-    t_flask.join()
-    t_main.join()
-    t_admin.join()
+    print("🚀 تم تشغيل البوتات في الخلفية، وجاري تشغيل سيرفر الويب الرئيسي...")
+    run_flask()
